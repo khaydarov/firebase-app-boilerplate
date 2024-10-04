@@ -1,16 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { v4 as uuid } from 'uuid';
+import * as admin from 'firebase-admin';
 import { getFirebaseApp } from '../../infrastructure/firebase';
 
 @Injectable()
-export class AuthService {
-  constructor() {}
+export class AuthService implements OnApplicationBootstrap {
+  private firebaseApp: admin.app.App;
+
+  onApplicationBootstrap() {
+    this.firebaseApp = getFirebaseApp();
+  }
 
   async getUserByEmail(email: string): Promise<any> {
-    const app = getFirebaseApp();
-
     try {
-      const user = await app.auth().getUserByEmail(email);
+      const user = await this.firebaseApp.auth().getUserByEmail(email);
       return {
         id: user.uid,
       };
@@ -20,18 +23,15 @@ export class AuthService {
   }
 
   async createUser(email: string, password: string): Promise<any> {
-    const app = getFirebaseApp();
-    const user = await app.auth().createUser({
+    const user = await this.firebaseApp.auth().createUser({
       uid: uuid(),
       email,
       password,
     });
 
-    const jwtToken = await app.auth().createCustomToken(user.uid);
     return {
       id: user.uid,
       email: user.email,
-      jwtToken,
     };
   }
 }

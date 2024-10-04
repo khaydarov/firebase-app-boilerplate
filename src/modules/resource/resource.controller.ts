@@ -1,16 +1,28 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { getFirestore } from '../../infrastructure/firebase';
 import { Timestamp } from 'firebase-admin/firestore';
+import { FirebaseAuthGuard } from '../auth/auth.guard';
 
 @Controller('resource')
 export class ResourceController {
   @Post('/')
-  async create(@Body() body: any) {
+  @UseGuards(FirebaseAuthGuard)
+  async create(@Request() req, @Body() body: any) {
     const { title, description } = body;
+    const { user } = req;
     const db = getFirestore();
     const docRef = await db.collection('resource').add({
       title,
       description,
+      creatorId: user.id,
       created_at: Timestamp.now(),
     });
 

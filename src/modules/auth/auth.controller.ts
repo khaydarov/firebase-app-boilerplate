@@ -1,4 +1,11 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { AuthService } from './auth.service';
 import { FirebaseAuthGuard } from './auth.guard';
@@ -9,8 +16,8 @@ export class AuthController {
 
   @Get('/me')
   @UseGuards(FirebaseAuthGuard)
-  async me() {
-    return 'Hello World';
+  async me(@Request() req) {
+    return req.user;
   }
 
   @Post('/sign-up')

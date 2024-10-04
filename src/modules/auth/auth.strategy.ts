@@ -2,6 +2,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-firebase-jwt';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { getFirebaseApp } from '../../infrastructure/firebase';
+import { AuthenticatedUser } from './auth.types';
 
 @Injectable()
 export class FirebaseAuthStrategy extends PassportStrategy(
@@ -14,16 +15,17 @@ export class FirebaseAuthStrategy extends PassportStrategy(
     });
   }
 
-  async validate(token: string) {
-    const firebaseUser: any = getFirebaseApp()
-      .auth()
-      .verifyIdToken(token, true)
-      .catch((err: any) => {
-        throw new UnauthorizedException(err.message);
-      });
-    if (!firebaseUser) {
-      throw new UnauthorizedException();
-    }
-    return firebaseUser;
+  async validate(token: string): Promise<AuthenticatedUser> {
+    const app = getFirebaseApp();
+    try {
+      const decodedToken = await app.auth().verifyIdToken(token, true);
+      return {
+        id: decodedToken.uid,
+        email: decodedToken.email,
+        provider: decodedToken.firebase.sign_in_provider,
+      } as AuthenticatedUser;
+    } catch {}
+
+    throw new UnauthorizedException();
   }
 }
